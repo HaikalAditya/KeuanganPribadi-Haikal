@@ -23,16 +23,4 @@ public class Koneksi {
         }
         return mysqlkonek;
     }
-
-    // Metode main untuk pengujian koneksi
-    public static void main(String[] args) {
-        try {
-            Connection conn = getConnection();
-            if (conn != null) {
-                System.out.println("Koneksi ke database berhasil!");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 }
