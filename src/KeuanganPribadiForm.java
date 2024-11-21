@@ -1,52 +1,73 @@
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class KeuanganPribadiForm extends javax.swing.JFrame {
+     // Variabel untuk menyimpan ID baris yang dipilih
+    private int selectedId = -1;
 
-    /**
-     * Creates new form KeuanganPribadiForm
-     */
+    // List untuk menyimpan ID dari data di tabel
+    private List<Integer> listId = new ArrayList<>();
     public KeuanganPribadiForm() {
-        initComponents();
+        initComponents();   
     }
+    
+    // Metode untuk mengatur input bisa di-edit atau tidak
+private void setEditableInput(boolean editable) {
+    txtKategori.setEditable(editable);
+    txtNominal.setEditable(editable);
+    txtKeterangan.setEditable(editable);
+    jDateChooser1.setEnabled(editable);
+    comboJenis.setEnabled(editable);
+}
 
- public class TransaksiHandler {
+// Reset input form
+private void resetInput() {
+    txtKategori.setText("");
+    txtNominal.setText("");
+    txtKeterangan.setText("");
+    jDateChooser1.setDate(null);
+    comboJenis.setSelectedIndex(0);
+    btnTambah.setEnabled(true);
+    btnSimpan.setEnabled(false);
+    btnHapus.setEnabled(false);
+    btnUbah.setEnabled(false);
+    btnBatal.setEnabled(false);
+    selectedId = -1; // Reset ID
+}
+ // Load data dari database ke JTable
+private void loadTable() {
+    DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+    model.setRowCount(0); // Hapus semua baris di tabel
+    listId.clear(); // Kosongkan daftar ID
 
-    // Metode untuk memuat data ke JTable
-    public void loadTable(javax.swing.JTable table) {
-        // Ambil model tabel dari JTable
-        DefaultTableModel model = (DefaultTableModel) table.getModel();
-        model.setRowCount(0); // Hapus semua baris yang ada di tabel
+    try {
+        Connection conn = Koneksi.getConnection();
+        String sql = "SELECT * FROM transaksi";
+        PreparedStatement ps = conn.prepareStatement(sql);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            // Tambahkan data ke tabel (kecuali ID)
+            Object[] row = {
+                rs.getDate("tanggal"),      // Tanggal
+                rs.getString("jenis"),     // Jenis transaksi
+                rs.getString("kategori"),  // Kategori
+                rs.getDouble("nominal"),   // Nominal
+                rs.getString("keterangan") // Keterangan
+            };
+            model.addRow(row);
 
-        try {
-            // Dapatkan koneksi ke database
-            Connection conn = Koneksi.getConnection();
-
-            // Query SQL untuk mengambil semua data dari tabel transaksi
-            String sql = "SELECT * FROM transaksi";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-
-            // Loop untuk menambahkan setiap baris data dari ResultSet ke model JTable
-            while (rs.next()) {
-                Object[] row = {
-                    rs.getDate("tanggal"),      // Ambil data tanggal
-                    rs.getString("jenis"),     // Ambil data jenis transaksi
-                    rs.getString("kategori"),  // Ambil data kategori
-                    rs.getDouble("nominal"),   // Ambil data nominal
-                    rs.getString("keterangan") // Ambil data keterangan
-                };
-                model.addRow(row); // Tambahkan data ke tabel
-            }
-        } catch (SQLException e) {
-            // Tampilkan pesan error jika terjadi masalah
-            javax.swing.JOptionPane.showMessageDialog(null, 
-                "Gagal memuat data: " + e.getMessage());
+            // Simpan ID ke list
+            listId.add(rs.getInt("id_transaksi"));
         }
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(this, "Gagal memuat data: " + e.getMessage());
     }
 }
     @SuppressWarnings("unchecked")
@@ -119,7 +140,7 @@ public class KeuanganPribadiForm extends javax.swing.JFrame {
                 return types [columnIndex];
             }
         });
-        jTable1.setPreferredSize(new java.awt.Dimension(500, 50));
+        jTable1.setPreferredSize(new java.awt.Dimension(500, 300));
         jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jTable1MouseClicked(evt);
@@ -136,21 +157,41 @@ public class KeuanganPribadiForm extends javax.swing.JFrame {
         btnSimpan.setFont(new java.awt.Font("Candara", 1, 14)); // NOI18N
         btnSimpan.setText("Simpan");
         btnSimpan.setPreferredSize(new java.awt.Dimension(95, 35));
+        btnSimpan.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSimpanActionPerformed(evt);
+            }
+        });
         jPanel5.add(btnSimpan);
 
         btnUbah.setFont(new java.awt.Font("Candara", 1, 14)); // NOI18N
         btnUbah.setText("Ubah");
         btnUbah.setPreferredSize(new java.awt.Dimension(95, 35));
+        btnUbah.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnUbahActionPerformed(evt);
+            }
+        });
         jPanel5.add(btnUbah);
 
         btnHapus.setFont(new java.awt.Font("Candara", 1, 14)); // NOI18N
         btnHapus.setText("Hapus");
         btnHapus.setPreferredSize(new java.awt.Dimension(95, 35));
+        btnHapus.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnHapusActionPerformed(evt);
+            }
+        });
         jPanel5.add(btnHapus);
 
         btnBatal.setFont(new java.awt.Font("Candara", 1, 14)); // NOI18N
         btnBatal.setText("Batal");
         btnBatal.setPreferredSize(new java.awt.Dimension(95, 35));
+        btnBatal.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBatalActionPerformed(evt);
+            }
+        });
         jPanel5.add(btnBatal);
 
         jPanel1.add(jPanel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 10, 540, 50));
@@ -182,6 +223,7 @@ public class KeuanganPribadiForm extends javax.swing.JFrame {
         jLabel9.setFont(new java.awt.Font("Candara", 0, 14)); // NOI18N
         jLabel9.setText("Tanggal");
 
+        jDateChooser1.setDateFormatString("dd, MMMM, yyyy");
         jDateChooser1.setFont(new java.awt.Font("Candara", 0, 14)); // NOI18N
 
         txtNominal.setFont(new java.awt.Font("Candara", 0, 14)); // NOI18N
@@ -346,81 +388,125 @@ public class KeuanganPribadiForm extends javax.swing.JFrame {
     }//GEN-LAST:event_btnKeluarActionPerformed
 
     private void formWindowActivated(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowActivated
-          TransaksiHandler handler = new TransaksiHandler();
-          handler.loadTable(jTable1);
+        loadTable();
+        btnSimpan.setEnabled(false);
+        btnHapus.setEnabled(false);
+        btnUbah.setEnabled(false);
+        btnBatal.setEnabled(false);
     }//GEN-LAST:event_formWindowActivated
 
     private void btnTambahActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTambahActionPerformed
-         try {
+       try {
         Connection conn = Koneksi.getConnection();
         String sql = "INSERT INTO transaksi (tanggal, jenis, kategori, nominal, keterangan) VALUES (?, ?, ?, ?, ?)";
         PreparedStatement ps = conn.prepareStatement(sql);
+        ps.setDate(1, new java.sql.Date(jDateChooser1.getDate().getTime())); // Ambil tanggal
+        ps.setString(2, comboJenis.getSelectedItem().toString());           // Ambil jenis
+        ps.setString(3, txtKategori.getText());                             // Ambil kategori
+        ps.setDouble(4, Double.parseDouble(txtNominal.getText()));          // Ambil nominal
+        ps.setString(5, txtKeterangan.getText());                           // Ambil keterangan
+        ps.executeUpdate();
 
-        // Set nilai dari input pengguna
-        ps.setDate(1, new java.sql.Date(jDateChooser1.getDate().getTime())); // Ambil tanggal dari JDateChooser
-        ps.setString(2, comboJenis.getSelectedItem().toString());           // Ambil jenis dari JComboBox
-        ps.setString(3, txtKategori.getText());                             // Ambil kategori dari JTextField
-        ps.setDouble(4, Double.parseDouble(txtNominal.getText()));          // Ambil nominal dari JTextField
-        ps.setString(5, txtKeterangan.getText());                           // Ambil keterangan dari JTextArea
-
-        ps.executeUpdate(); // Eksekusi query untuk menambah data
-
-        // Reset inputan
-        txtKategori.setText("");
-        txtNominal.setText("");
-        txtKeterangan.setText("");
-        jDateChooser1.setDate(null);
-        comboJenis.setSelectedIndex(0);
-
-        // Tampilkan pesan sukses
-        javax.swing.JOptionPane.showMessageDialog(this, "Data berhasil ditambahkan!");
-
-        // Muat ulang tabel
-        TransaksiHandler handler = new TransaksiHandler();
-        handler.loadTable(jTable1); // jTable1 adalah nama JTable Anda
+        JOptionPane.showMessageDialog(this, "Data berhasil ditambahkan!");
+        resetInput();
+//        loadTable();
     } catch (SQLException e) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Gagal menambahkan data: " + e.getMessage());
+        JOptionPane.showMessageDialog(this, "Gagal menambahkan data: " + e.getMessage());
     }
     }//GEN-LAST:event_btnTambahActionPerformed
 
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
-        int selectedRow = jTable1.getSelectedRow();
+       int selectedRow = jTable1.getSelectedRow();
     if (selectedRow != -1) {
-        // Ambil model JTable
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+        selectedId = listId.get(selectedRow); // Ambil ID dari listId
 
-        // Pindahkan data dari tabel ke inputan
         try {
-            // Kolom ke-0: Tanggal
             java.util.Date tanggal = (java.util.Date) model.getValueAt(selectedRow, 0);
-            jDateChooser1.setDate(tanggal); // Set ke JDateChooser
-            
-            // Kolom ke-1: Jenis Transaksi
+            jDateChooser1.setDate(tanggal);
             String jenis = model.getValueAt(selectedRow, 1).toString();
-            comboJenis.setSelectedItem(jenis); // Set ke JComboBox
-            
-            // Kolom ke-2: Kategori
+            comboJenis.setSelectedItem(jenis);
             String kategori = model.getValueAt(selectedRow, 2).toString();
-            txtKategori.setText(kategori); // Set ke JTextField
-            
-            // Kolom ke-3: Nominal
+            txtKategori.setText(kategori);
             String nominal = model.getValueAt(selectedRow, 3).toString();
-            txtNominal.setText(nominal); // Set ke JTextField
-            
-            // Kolom ke-4: Keterangan
+            txtNominal.setText(nominal);
             String keterangan = model.getValueAt(selectedRow, 4).toString();
-            txtKeterangan.setText(keterangan); // Set ke JTextArea
+            txtKeterangan.setText(keterangan);
 
-            // Set tombol yang sesuai
-            btnTambah.setEnabled(false); // Disable tombol Tambah
-            btnSimpan.setEnabled(true); // Enable tombol Simpan
-            btnHapus.setEnabled(true); // Enable tombol Hapus
-            btnBatal.setEnabled(true); // Enable tombol Batal
+            setEditableInput(false);
+            btnTambah.setEnabled(false);
+            btnSimpan.setEnabled(false);
+            btnUbah.setEnabled(true);
+            btnHapus.setEnabled(true);
+            btnBatal.setEnabled(true);
         } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Terjadi kesalahan: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Terjadi kesalahan: " + e.getMessage());
         }
     }
     }//GEN-LAST:event_jTable1MouseClicked
+
+    private void btnUbahActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUbahActionPerformed
+        if (selectedId != -1) {
+        setEditableInput(true);
+        btnSimpan.setEnabled(true);
+        btnUbah.setEnabled(false);
+        btnHapus.setEnabled(false);
+    } else {
+        JOptionPane.showMessageDialog(this, "Pilih data yang ingin diubah!");
+    }    
+    }//GEN-LAST:event_btnUbahActionPerformed
+
+    private void btnSimpanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanActionPerformed
+        try {
+        Connection conn = Koneksi.getConnection();
+        String sql = "UPDATE transaksi SET tanggal = ?, jenis = ?, kategori = ?, nominal = ?, keterangan = ? WHERE id_transaksi = ?";
+        PreparedStatement ps = conn.prepareStatement(sql);
+        ps.setDate(1, new java.sql.Date(jDateChooser1.getDate().getTime()));
+        ps.setString(2, comboJenis.getSelectedItem().toString());
+        ps.setString(3, txtKategori.getText());
+        ps.setDouble(4, Double.parseDouble(txtNominal.getText()));
+        ps.setString(5, txtKeterangan.getText());
+        ps.setInt(6, selectedId);
+        ps.executeUpdate();
+
+        JOptionPane.showMessageDialog(this, "Data berhasil diperbarui!");
+        resetInput();
+//        loadTable();
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(this, "Gagal menyimpan data: " + e.getMessage());
+    }
+    }//GEN-LAST:event_btnSimpanActionPerformed
+
+    private void btnHapusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusActionPerformed
+if (selectedId != -1) {
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Apakah Anda yakin ingin menghapus data ini?", 
+            "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                Connection conn = Koneksi.getConnection();
+                String sql = "DELETE FROM transaksi WHERE id_transaksi = ?";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setInt(1, selectedId);
+                ps.executeUpdate();
+
+                JOptionPane.showMessageDialog(this, "Data berhasil dihapus!");
+                resetInput();
+                setEditableInput(true);
+//                loadTable();
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Gagal menghapus data: " + e.getMessage());
+            }
+        }
+    } else {
+        JOptionPane.showMessageDialog(this, "Pilih data yang ingin dihapus!");
+    }
+    }//GEN-LAST:event_btnHapusActionPerformed
+
+    private void btnBatalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBatalActionPerformed
+        resetInput();
+        setEditableInput(true);
+    }//GEN-LAST:event_btnBatalActionPerformed
 
     /**
      * @param args the command line arguments
